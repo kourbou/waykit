@@ -112,12 +112,23 @@ static int _create_pool_file(size_t size, char **name)
     return fd;
 }
 
+static void _delete_buffer(struct k_window_buffer *buffer)
+{
+    cairo_surface_destroy(buffer->cairo_surface);
+    cairo_destroy(buffer->cairo);
+    wl_buffer_destroy(buffer->wl_buffer);
+    free(buffer);
+}
+
 static struct k_window_buffer *_create_buffer(struct k_window *win, uint32_t width,
         uint32_t height)
 {
     char *name;
     uint32_t stride = width * 4;
     uint32_t size = stride * height;
+
+    if(win->buffer)
+       _delete_buffer(win->buffer);
 
     struct k_window_buffer* buf = fzalloc(sizeof(struct k_window_buffer));
     int fd = _create_pool_file(size, &name);
@@ -140,6 +151,9 @@ static struct k_window_buffer *_create_buffer(struct k_window *win, uint32_t wid
     buf->cairo = cairo_create(buf->cairo_surface);
 
     wl_buffer_add_listener(buf->wl_buffer, &buffer_listener, buf);
+
+    win->buffer = buf;
+
     nlog("created buffer");
     return buf;
 }
@@ -196,11 +210,10 @@ void k_window_render(struct k_window *win)
 
 void k_window_destroy(struct k_window *win)
 {
-    cairo_destroy(win->buffer->cairo);
-    cairo_surface_destroy(win->buffer->cairo_surface);
-    wl_buffer_destroy(win->buffer->wl_buffer);
+    _delete_buffer(win->buffer);
 
     zxdg_surface_v6_destroy(win->zxdg_surface);
+    zxdg_toplevel_v6_destroy(win->zxdg_toplevel);
     wl_surface_destroy(win->surface);
 
     struct k_window_format *fmt_head = win->format_head;
@@ -217,7 +230,6 @@ void k_window_destroy(struct k_window *win)
         free(to_del);
     }
 
-    free(win->buffer);
     free(win);
     return;
 }

@@ -1,4 +1,7 @@
+*.swp
+
 extensions
 exec
 xdg-shell-unstable-v6.c
 xdg-shell-unstable-v6.h
+.vim_layout
