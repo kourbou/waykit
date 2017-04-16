@@ -30,7 +30,7 @@ void render(uint32_t width, uint32_t height,
 int main(int argc, char** argv)
 {
     struct k_display *disp = k_display_connect();
-    struct k_window *win = k_window_create(disp, 400, 400);
+    struct k_window *win = k_window_create(disp, 800, 600);
 
     k_window_register_draw(win, &render);
 
