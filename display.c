@@ -31,7 +31,7 @@ static void _handle_geometry(void *data, struct wl_output *wl_output,
         int32_t subpixel, const char *make, const char *model,
         int32_t transform)
 {
-    struct k_display *disp = (struct k_display*)data;
+    struct k_display *disp = data;
     struct k_monitor *new_mon = fzalloc(sizeof(struct k_monitor));
 
     new_mon->x = x;
@@ -51,7 +51,7 @@ static void _handle_geometry(void *data, struct wl_output *wl_output,
 static void _handle_mode(void *data, struct wl_output *wl_output, uint32_t flags,
         int32_t width, int32_t height, int32_t refresh)
 {
-    struct k_display *disp = (struct k_display*)data;
+    struct k_display *disp = data;
     struct k_mode *new_mode = fzalloc(sizeof(struct k_mode));
 
     new_mode->width = width;
@@ -70,13 +70,13 @@ static void _handle_mode(void *data, struct wl_output *wl_output, uint32_t flags
 
 static void _handle_done(void *data, struct wl_output *wl_output)
 {
-    struct k_display *disp = (struct k_display*)data;
+    struct k_display *disp = data;
     disp->output_done = true;
 }
 
 static void _handle_scale(void *data, struct wl_output *wl_output, int32_t factor)
 {
-    struct k_display *disp = (struct k_display*)data;
+    struct k_display *disp = data;
     disp->scale_factor = factor;
 }
 
@@ -95,7 +95,7 @@ static void _handle_global(void *data, struct wl_registry *registry,
 {
     vlog("Global declared: %s v%d", interface, version);
 
-    struct k_display *disp = (struct k_display*)data;
+    struct k_display *disp = data;
     /* Cycle through the interfaces we need */
     if(strcmp(interface, wl_compositor_interface.name) == 0) {
         disp->compositor = wl_registry_bind(registry, name, &wl_compositor_interface, min(3, version));
@@ -128,7 +128,7 @@ struct wl_registry_listener registry_listener = {
 static void _handle_ping(void *data, struct zxdg_shell_v6 *zxdg_shell_v6,
         uint32_t serial)
 {
-    struct k_display *disp = (struct k_display*)data;
+    struct k_display *disp = data;
     zxdg_shell_v6_pong(disp->shell, serial);
 }
 
@@ -235,7 +235,6 @@ void k_display_main(struct k_display* disp)
             /* Render only once we've dealt with all events */
             if(!disp->window->buffer->busy) {
                 k_window_render(disp->window);
-                disp->window->buffer->busy;
             }
         }
     }

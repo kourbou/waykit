@@ -16,8 +16,8 @@ static struct k_window_buffer *_create_buffer(struct k_window *win, uint32_t wid
 /* wl_buffer listener */
 static void _handle_release(void *data, struct wl_buffer *wl_buffer)
 {
-   struct k_window_buffer *buf = (struct k_window_buffer*)data;
-   buf->busy = false;
+    struct k_window_buffer *buf = data;
+    buf->busy = false;
 }
 
 struct wl_buffer_listener buffer_listener = {
@@ -28,7 +28,7 @@ struct wl_buffer_listener buffer_listener = {
 /* wl_shm listener */
 static void _handle_format(void *data, struct wl_shm *wl_shm, uint32_t format)
 {
-    struct k_window *win = (struct k_window*)data;
+    struct k_window *win = data;
     struct k_window_format *fmt = fzalloc(sizeof(struct k_window_format));
 
     fmt->value = format;
@@ -45,8 +45,12 @@ struct wl_shm_listener shm_listener = {
 static void _handle_surf_configure(void *data, struct zxdg_surface_v6 *zxdg_surface,
         uint32_t serial)
 {
-    vlog("surf configure: %d", serial);
+    struct k_window *win = data;
 
+    if((win->width != win->buffer->width) || (win->height != win->buffer->height))
+        win->buffer = _create_buffer(win, win->width, win->height);
+
+    vlog("surf configure: %d %d %d", serial, win->width, win->height);
     zxdg_surface_v6_ack_configure(zxdg_surface, serial);
 }
 
@@ -63,12 +67,9 @@ void _handle_configure(void *data, struct zxdg_toplevel_v6 *zxdg_toplevel_v6,
     if(width == 0 || height == 0)
         return;
 
-    struct k_window *win = (struct k_window*)data;
+    struct k_window *win = data;
     win->width = width;
     win->height = height;
-
-    if((win->width != win->buffer->width) || (win->height != win->buffer->height))
-        win->buffer = _create_buffer(win, width, height);
 }
 
 void _handle_close(void *data, struct zxdg_toplevel_v6 *zxdg_toplevel_v6)
@@ -152,7 +153,7 @@ struct k_window *k_window_create(struct k_display *disp, int width, int height)
     win->surface = wl_compositor_create_surface(disp->compositor);
     win->zxdg_surface = zxdg_shell_v6_get_xdg_surface(disp->shell, win->surface);
     win->zxdg_toplevel = zxdg_surface_v6_get_toplevel(win->zxdg_surface);
-    win->buffer = _create_buffer(win, K_WINDOW_DEFAULT_WIDTH, K_WINDOW_DEFAULT_HEIGHT);
+    win->buffer = _create_buffer(win, width, height);
 
     wl_shm_add_listener(disp->shm, &shm_listener, win);
 
@@ -162,9 +163,8 @@ struct k_window *k_window_create(struct k_display *disp, int width, int height)
 
     win->width = width;
     win->height = height;
-    // TODO: Should we be setting the default x, y coords?
-    zxdg_surface_v6_set_window_geometry(win->zxdg_surface, 20, 20, width, height);
-    wl_display_roundtrip(win->disp->display);
+
+    wl_surface_commit(win->surface);
 
     nlog("window created");
     return win;

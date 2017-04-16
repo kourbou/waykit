@@ -1,9 +1,6 @@
 #ifndef K_WINDOW_H
 #define K_WINDOW_H
 
-#define K_WINDOW_DEFAULT_WIDTH  1280
-#define K_WINDOW_DEFAULT_HEIGHT 720
-
 #include <stdbool.h>
 #include <wayland-client.h>
 #include <cairo/cairo.h>
