@@ -10,13 +10,13 @@
 #include "window.h"
 
 /* Declared before the shell_surface listener */
-static struct k_window_buffer *_create_buffer(struct k_window *win, uint32_t width,
+static struct wk_window_buffer *_create_buffer(struct wk_window *win, uint32_t width,
         uint32_t height);
 
 /* wl_buffer listener */
 static void _handle_release(void *data, struct wl_buffer *wl_buffer)
 {
-    struct k_window_buffer *buf = data;
+    struct wk_window_buffer *buf = data;
     buf->busy = false;
 }
 
@@ -28,8 +28,8 @@ struct wl_buffer_listener buffer_listener = {
 /* wl_shm listener */
 static void _handle_format(void *data, struct wl_shm *wl_shm, uint32_t format)
 {
-    struct k_window *win = data;
-    struct k_window_format *fmt = fzalloc(sizeof(struct k_window_format));
+    struct wk_window *win = data;
+    struct wk_window_format *fmt = fzalloc(sizeof(struct wk_window_format));
 
     fmt->value = format;
     fmt->next = win->format_head;
@@ -45,7 +45,7 @@ struct wl_shm_listener shm_listener = {
 static void _handle_surf_configure(void *data, struct zxdg_surface_v6 *zxdg_surface,
         uint32_t serial)
 {
-    struct k_window *win = data;
+    struct wk_window *win = data;
 
     if((win->width != win->buffer->width) || (win->height != win->buffer->height))
         win->buffer = _create_buffer(win, win->width, win->height);
@@ -67,7 +67,7 @@ void _handle_configure(void *data, struct zxdg_toplevel_v6 *zxdg_toplevel_v6,
     if(width == 0 || height == 0)
         return;
 
-    struct k_window *win = data;
+    struct wk_window *win = data;
     win->width = width;
     win->height = height;
 }
@@ -112,7 +112,7 @@ static int _create_pool_file(size_t size, char **name)
     return fd;
 }
 
-static void _delete_buffer(struct k_window_buffer *buffer)
+static void _delete_buffer(struct wk_window_buffer *buffer)
 {
     cairo_surface_destroy(buffer->cairo_surface);
     cairo_destroy(buffer->cairo);
@@ -120,7 +120,7 @@ static void _delete_buffer(struct k_window_buffer *buffer)
     free(buffer);
 }
 
-static struct k_window_buffer *_create_buffer(struct k_window *win, uint32_t width,
+static struct wk_window_buffer *_create_buffer(struct wk_window *win, uint32_t width,
         uint32_t height)
 {
     char *name;
@@ -130,7 +130,7 @@ static struct k_window_buffer *_create_buffer(struct k_window *win, uint32_t wid
     if(win->buffer)
        _delete_buffer(win->buffer);
 
-    struct k_window_buffer* buf = fzalloc(sizeof(struct k_window_buffer));
+    struct wk_window_buffer* buf = fzalloc(sizeof(struct wk_window_buffer));
     int fd = _create_pool_file(size, &name);
 
     // TODO: Check that we have the WL_SHM_FORMAT_ARGB8888 available
@@ -158,11 +158,11 @@ static struct k_window_buffer *_create_buffer(struct k_window *win, uint32_t wid
     return buf;
 }
 
-struct k_window *k_window_create(struct k_display *disp, int width, int height)
+struct wk_window *wk_window_create(struct wk_display *disp, int width, int height)
 {
     failsafe(disp);
 
-    struct k_window *win = fzalloc(sizeof(struct k_window));
+    struct wk_window *win = fzalloc(sizeof(struct wk_window));
     win->disp = disp;
     win->surface = wl_compositor_create_surface(disp->compositor);
     win->zxdg_surface = zxdg_shell_v6_get_xdg_surface(disp->shell, win->surface);
@@ -184,19 +184,19 @@ struct k_window *k_window_create(struct k_display *disp, int width, int height)
     return win;
 }
 
-void k_window_register_draw(struct k_window *win, void (*fun)(uint32_t width,
+void wk_window_register_draw(struct wk_window *win, void (*fun)(uint32_t width,
             uint32_t height, void *pixels, cairo_t *cairo))
 {
-    struct k_draw_node *new = fzalloc(sizeof(struct k_draw_node));
+    struct wk_draw_node *new = fzalloc(sizeof(struct wk_draw_node));
     new->function = fun;
 
     new->next = win->draw_cb_head;
     win->draw_cb_head = new;
 }
 
-void k_window_render(struct k_window *win)
+void wk_window_render(struct wk_window *win)
 {
-    for(struct k_draw_node* node = win->draw_cb_head; node != NULL; node = node->next) {
+    for(struct wk_draw_node* node = win->draw_cb_head; node != NULL; node = node->next) {
         (*node->function)(win->buffer->width, win->buffer->height,
                 win->buffer->pixels, win->buffer->cairo);
     }
@@ -208,7 +208,7 @@ void k_window_render(struct k_window *win)
     wl_surface_commit(win->surface);
 }
 
-void k_window_destroy(struct k_window *win)
+void wk_window_destroy(struct wk_window *win)
 {
     _delete_buffer(win->buffer);
 
@@ -216,16 +216,16 @@ void k_window_destroy(struct k_window *win)
     zxdg_toplevel_v6_destroy(win->zxdg_toplevel);
     wl_surface_destroy(win->surface);
 
-    struct k_window_format *fmt_head = win->format_head;
+    struct wk_window_format *fmt_head = win->format_head;
     while(fmt_head != NULL) {
-        struct k_window_format* to_del = fmt_head;
+        struct wk_window_format* to_del = fmt_head;
         fmt_head = fmt_head->next;
         free(to_del);
     }
 
-    struct k_draw_node *dr_head = win->draw_cb_head;
+    struct wk_draw_node *dr_head = win->draw_cb_head;
     while(dr_head != NULL) {
-        struct k_draw_node *to_del = dr_head;
+        struct wk_draw_node *to_del = dr_head;
         dr_head = dr_head->next;
         free(to_del);
     }

@@ -1,5 +1,5 @@
-#ifndef K_UTIL_H
-#define K_UTIL_H
+#ifndef WK_UTIL_H
+#define WK_UTIL_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,4 +35,4 @@ static inline void* zalloc(size_t size)
     return calloc(1, size);
 }
 
-#endif /* K_UTIL_H */
+#endif /* WK_UTIL_H */

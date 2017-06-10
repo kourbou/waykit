@@ -1,5 +1,5 @@
-#ifndef K_DISPLAY_H
-#define K_DISPLAY_H
+#ifndef WK_DISPLAY_H
+#define WK_DISPLAY_H
 
 #include <stdint.h>
 #include <wayland-client.h>
@@ -7,11 +7,11 @@
 
 #include "window.h"
 
-/* Events sent k_display_emit() */
+/* Events sent wk_display_emit() */
 #define KE_BRK  0
 
 /* Modes are found by the mode event of wl_ouput_listener */
-struct k_mode {
+struct wk_mode {
     /* See wl_output_listener structure in wayland-client-protocol.h */
     bool preferred;
     bool current;
@@ -19,12 +19,12 @@ struct k_mode {
     int32_t height;
     int32_t refresh;
 
-    /* Points to next k_mode in list */
-    struct k_mode *next;
+    /* Points to next wk_mode in list */
+    struct wk_mode *next;
 };
 
 /* Monitors are found by the geometry event of wl_ouput_listener */
-struct k_monitor {
+struct wk_monitor {
     /* See wl_output_listener structure in wayland-client-protocol.h */
     int32_t x;
     int32_t y;
@@ -35,12 +35,12 @@ struct k_monitor {
     const char* model;
     int32_t transform;
 
-    /* Points to next k_monitor in the list */
-    struct k_monitor *next;
+    /* Points to next wk_monitor in the list */
+    struct wk_monitor *next;
 };
 
 /* Main structure */
-struct k_display {
+struct wk_display {
     /* Wayland objects */
     struct wl_display* display;
     struct wl_registry* registry;
@@ -52,8 +52,8 @@ struct k_display {
     struct wl_output* output;
 
     /* wl_output lists */
-    struct k_monitor *mon_head;
-    struct k_mode *mode_head;
+    struct wk_monitor *mon_head;
+    struct wk_mode *mode_head;
     int32_t scale_factor;
     bool output_done;
 
@@ -62,12 +62,12 @@ struct k_display {
 
     /* The display's window */
     // TODO: Enable support for multiple windows (i.e. create list here)
-    struct k_window *window;
+    struct wk_window *window;
 };
 
 /* Functions */
-struct k_display *k_display_connect();
-void k_display_main(struct k_display *disp);
-void k_display_disconnect(struct k_display *disp);
+struct wk_display *wk_display_connect();
+void wk_display_main(struct wk_display *disp);
+void wk_display_disconnect(struct wk_display *disp);
 
-#endif /* K_DISPLAY_H */
+#endif /* WK_DISPLAY_H */
