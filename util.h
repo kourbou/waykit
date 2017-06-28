@@ -7,9 +7,9 @@
 
 #define STRINGIFY(x) #x
 
-#define red(x)  "\033[1m\033[31m"x
+#define red(x)  "\033[1m\033[31m"x"\033[39;49m"
 
-// TODO: Create log.c and get better logging.
+// TODO: Create log.c and get better logging
 #define nlog(x) fprintf(stderr, x"\n");
 #define vlog(x, ...) fprintf(stderr, x"\n", __VA_ARGS__)
 

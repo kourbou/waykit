@@ -6,6 +6,7 @@
 #include <cairo/cairo.h>
 #include "xdg-shell-unstable-v6.h"
 #include "util.h"
+#include "event.h"
 
 #include "window.h"
 
@@ -146,9 +147,9 @@ static struct wk_window_buffer *_create_buffer(struct wk_window *win, uint32_t w
     buf->busy = false;
     buf->width = width;
     buf->height = height;
-    buf->cairo_surface = cairo_image_surface_create_for_data(buf->pixels,
-                    CAIRO_FORMAT_ARGB32, width, height, stride);
-    buf->cairo = cairo_create(buf->cairo_surface);
+    //buf->cairo_surface = cairo_image_surface_create_for_data(buf->pixels,
+    //                CAIRO_FORMAT_ARGB32, width, height, stride);
+    //buf->cairo = cairo_create(buf->cairo_surface);
 
     wl_buffer_add_listener(buf->wl_buffer, &buffer_listener, buf);
 
@@ -223,10 +224,14 @@ void wk_window_destroy(struct wk_window *win)
         free(to_del);
     }
 
-    struct wk_draw_node *dr_head = win->draw_cb_head;
-    while(dr_head != NULL) {
-        struct wk_draw_node *to_del = dr_head;
-        dr_head = dr_head->next;
+    struct wk_context *ctx_head = win->context_head;
+    while(ctx_head != NULL) {
+        struct wk_context *to_del = ctx_head;
+
+        cairo_destroy(to_del->cairo);
+        cairo_surface_destroy(to_del->surface);
+
+        ctx_head = ctx_head->next;
         free(to_del);
     }
 
@@ -234,3 +239,50 @@ void wk_window_destroy(struct wk_window *win)
     return;
 }
 
+struct wk_context* wk_window_context(struct wk_window *win, wk_context_func function,
+        int layer, int x, int y, int width, int height)
+{
+    //TODO: Check that the window is big enough for the context?...
+
+    struct wk_context *new = fzalloc(sizeof wk_context);
+
+    new->win = win;
+
+    new->layer = layer;
+    new->x = x;
+    new->y = y;
+    new->width = width;
+    new->height = height;
+
+    if(!win->context_head) {
+        win->context_head = new;
+        win->context_tail = new;
+    } else {
+        new->prev = win->context_tail;
+        win->context_tail->next = new;
+        win->context_tail = new;
+    }
+
+    // Should create a surface with the right offset etc...
+    new->surface = cairo_image_surface_create_for_data(
+            win->buffer->pixels[((y * win->buffer->width) * 4) + (x * 4)],
+            CAIRO_FORMAT_ARGB32,
+            width,
+            height,
+            width * 4);
+    new->cairo = cairo_create(new->surface);
+
+    // Actually all contexts should have a cairo_surface and cairo (ctx) created with
+    // their zone so that they don’t mess up other contexts
+
+    // Look at libuv source, it's pretty code
+    // https://github.com/libuv/libuv/blob/fd7ce57f2b14651482c227898f6999664db937de/src/unix/loop.c
+}
+
+void wk_window_remove_context(struct wk_window *win, struct wk_context *remove)
+{
+    remove->prev = remove->next;
+    cairo_destroy(remove->cairo);
+    cairo_surface_destroy(remove->surface);
+    free(remove);
+}

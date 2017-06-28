@@ -6,14 +6,7 @@
 #include <cairo/cairo.h>
 #include "xdg-shell-unstable-v6.h"
 #include "display.h"
-
-/* The callback for drawing */
-// TODO: Use frame.c to create frames and have callbacks for all of them
-struct wk_draw_node {
-    void (*function)(uint32_t width, uint32_t height,
-        void *pixels, cairo_t *cairo);
-    struct wk_draw_node *next;
-};
+#include "event.h"
 
 /* A buffer struct that is used internally */
 struct wk_window_buffer {
@@ -22,9 +15,6 @@ struct wk_window_buffer {
 
     void *pixels;
     struct wl_buffer *wl_buffer;
-
-    cairo_surface_t *cairo_surface;
-    cairo_t *cairo;
 };
 
 /* Formats are found by the format event of wl_shm_listener */
@@ -52,8 +42,9 @@ struct wk_window {
     char *title;
     struct wk_window_buffer *buffer;
 
-    /* List of wk_draw callbacks */
-    struct wk_draw_node *draw_cb_head;
+    /* List of wk_contexts */
+    struct wk_context *context_head;
+    struct wk_context *context_tail;
 
     /* List of shm formats */
     struct wk_window_format *format_head;

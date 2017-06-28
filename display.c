@@ -151,7 +151,7 @@ struct wk_display *wk_display_connect()
 
 
     /* Connect to display. NULL is the default "wayland-0" */
-    disp->display = failsafe(wl_display_connect(NULL));
+    disp->display = failsafe(wl_display_connect("wayland-0"));
     disp->registry = wl_display_get_registry(disp->display);
 
     /* Attach the listener and send the display as data */
