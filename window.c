@@ -242,7 +242,7 @@ void wk_window_destroy(struct wk_window *win)
 struct wk_context* wk_window_context(struct wk_window *win, wk_context_func function,
         int layer, int x, int y, int width, int height)
 {
-    //TODO: Check that the window is big enough for the context?...
+    //TODO: Check that the window is big enough for the context?
 
     struct wk_context *new = fzalloc(sizeof wk_context);
 
@@ -254,16 +254,7 @@ struct wk_context* wk_window_context(struct wk_window *win, wk_context_func func
     new->width = width;
     new->height = height;
 
-    if(!win->context_head) {
-        win->context_head = new;
-        win->context_tail = new;
-    } else {
-        new->prev = win->context_tail;
-        win->context_tail->next = new;
-        win->context_tail = new;
-    }
-
-    // Should create a surface with the right offset etc...
+    // Should create a surface with the right offset etc.
     new->surface = cairo_image_surface_create_for_data(
             win->buffer->pixels[((y * win->buffer->width) * 4) + (x * 4)],
             CAIRO_FORMAT_ARGB32,
@@ -272,11 +263,20 @@ struct wk_context* wk_window_context(struct wk_window *win, wk_context_func func
             width * 4);
     new->cairo = cairo_create(new->surface);
 
-    // Actually all contexts should have a cairo_surface and cairo (ctx) created with
-    // their zone so that they don’t mess up other contexts
+    //TODO: figure this out...
+    if(!win->context_head)
 
-    // Look at libuv source, it's pretty code
-    // https://github.com/libuv/libuv/blob/fd7ce57f2b14651482c227898f6999664db937de/src/unix/loop.c
+    struct wk_context *prev = win->context_head;
+    while((prev) && (layer < prev->layer)) {
+        prev = prev->next;
+    }
+
+    if(prev) {
+        new->next = prev->next;
+        prev->next = new;
+    } else {
+
+    }
 }
 
 void wk_window_remove_context(struct wk_window *win, struct wk_context *remove)

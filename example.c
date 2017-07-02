@@ -33,8 +33,9 @@ void ex_ctx(struct wk_context *ctx,
 int main(int argc, char** argv)
 {
     struct wk_display *disp = wk_display_connect();
-    struct wk_window *win = wk_window_create(disp, 800, 600);
+    wk_event_prepare(disp);
 
+    struct wk_window *win = wk_window_create(disp, 800, 600);
     wk_window_register_draw(win, &render);
 
     wk_display_main(disp);

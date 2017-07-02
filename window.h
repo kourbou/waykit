@@ -44,7 +44,6 @@ struct wk_window {
 
     /* List of wk_contexts */
     struct wk_context *context_head;
-    struct wk_context *context_tail;
 
     /* List of shm formats */
     struct wk_window_format *format_head;

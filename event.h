@@ -2,6 +2,7 @@
 #define WK_EVENT_H
 
 #include <cairo/cairo.h>
+#include "display.h"
 #include "window.h"
 
 #define WK_MAX_EVENTS   500
@@ -29,12 +30,14 @@ struct wk_context {
     int queue_enq, queue_deq;
     struct wk_event queue[WK_MAX_EVENTS];
 
-    int layer, x, y, width, height;
+    int layer, x, y, width, height, retcode;
 }
 
 void wk_event_enqueue(struct wk_context *ctx, struct wk_event *in);
 void wk_event_dequeue(struct wk_context *ctx, struct wk_event *out);
 void wk_event_rsqueue(struct wk_context *ctx);
+
+void wk_event_prepare(struct wk_display *disp);
 
 /* wk_context_func return values */
 

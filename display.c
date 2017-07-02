@@ -6,6 +6,7 @@
 #include <wayland-client.h>
 #include "xdg-shell-unstable-v6.h"
 #include "util.h"
+#include "event.h"
 
 #include "display.h"
 
